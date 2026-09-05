@@ -1,6 +1,6 @@
 # Terminal Chat Application
 
-A small multiplayer terminal chat application built with Go and raw TCP. Phase 4 adds JSON Lines message persistence and room history.
+A multiplayer terminal chat application written in Go using raw TCP and newline-delimited JSON. It demonstrates concurrent client handling, synchronized shared state, multiple rooms, private messages, online users, and persistent room history.
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ Start two or more clients in separate terminals:
 go run ./cmd/client -addr localhost:8080
 ```
 
-Each client asks for a unique username and starts in `general`. Type normal text and press Enter to broadcast it to members of the current room. Enter `/quit` to disconnect.
+Each client asks for a unique username and starts in `general`. Type normal text and press Enter to broadcast it to members of the current room. Enter `/quit` to disconnect. Press `Ctrl+C` in the server terminal for graceful shutdown.
 
 Room commands:
 
@@ -61,4 +61,71 @@ The server stores room chat messages as one JSON object per line in `data/messag
 
 ## Current scope
 
-Phase 4 covers private messages, online-user listing, complete command parsing, JSON Lines message persistence, and room history. Makefile targets, integration tests, and graceful server shutdown will be added in later phases.
+Phase 5 includes private messages, online-user listing, complete command parsing, JSON Lines message persistence, room history, integration tests, Makefile targets, and graceful server shutdown.
+
+## Architecture details
+
+- `cmd/server` parses configuration, opens the persistent store, and handles OS shutdown signals.
+- `cmd/client` starts the interactive terminal client.
+- `internal/server` owns TCP listeners, client connections, rooms, username uniqueness, routing, and graceful shutdown.
+- `internal/client` translates terminal commands and renders server events from a reader goroutine.
+- `internal/protocol` defines the shared newline-delimited JSON message contract.
+- `internal/store` contains the replaceable `MessageStore` interface, memory implementation, and JSON Lines implementation.
+- `pkg/models` contains persisted domain models.
+
+Each connected client has a buffered outgoing channel and dedicated writer goroutine. The server protects clients, rooms, and membership with `sync.RWMutex`. The storage implementations protect their data with their own mutexes.
+
+## Protocol
+
+Messages are one JSON object per line. Examples:
+
+```json
+{"type":"register","username":"alice"}
+{"type":"join_room","content":"lounge"}
+{"type":"chat","content":"Hello"}
+{"type":"private_message","target":"bob","content":"Hi"}
+{"type":"history","limit":20}
+```
+
+Server events use `system`, `error`, `chat`, `private_message`, and `history` message types. Chat events include the sender and room. The protocol definitions are shared by both client and server.
+
+## Persistence
+
+Room chat messages are stored as JSON Lines in `data/messages.jsonl`. Each record contains a UTC timestamp, username, room, and content. `/history` reads only the current room and defaults to the most recent 20 records, with a maximum of 100 per request.
+
+## Development
+
+```powershell
+make test
+make test-race
+make vet
+make build
+make clean
+```
+
+The equivalent Go commands are `go test ./...`, `go test -race ./...`, `go vet ./...`, and `go build ./cmd/server` / `go build ./cmd/client`.
+
+## Project structure
+
+```text
+cmd/
+	client/main.go
+	server/main.go
+internal/
+	chat/
+	client/
+	protocol/
+	server/
+	store/
+pkg/models/
+data/
+Makefile
+```
+
+## Future improvements
+
+- Add authentication and authorization for room administration.
+- Add message IDs, delivery acknowledgements, and paginated history.
+- Add configurable retention and stronger persistence recovery.
+- Add richer terminal rendering and input handling.
+- Add CI coverage across Windows, macOS, and Linux.

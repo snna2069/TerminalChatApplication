@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,11 +19,15 @@ import (
 )
 
 type Server struct {
-	addr    string
-	mu      sync.RWMutex
-	clients map[*client]struct{}
-	rooms   map[string]*room
-	store   store.MessageStore
+	addr      string
+	mu        sync.RWMutex
+	clients   map[*client]struct{}
+	rooms     map[string]*room
+	store     store.MessageStore
+	listener  net.Listener
+	shutdown  chan struct{}
+	closeOnce sync.Once
+	wg        sync.WaitGroup
 }
 
 type client struct {
@@ -38,10 +43,11 @@ func New(addr string) *Server {
 
 func NewWithStore(addr string, messageStore store.MessageStore) *Server {
 	return &Server{
-		addr:    addr,
-		clients: make(map[*client]struct{}),
-		rooms:   map[string]*room{protocol.DefaultRoom: newRoom(protocol.DefaultRoom)},
-		store:   messageStore,
+		addr:     addr,
+		clients:  make(map[*client]struct{}),
+		rooms:    map[string]*room{protocol.DefaultRoom: newRoom(protocol.DefaultRoom)},
+		store:    messageStore,
+		shutdown: make(chan struct{}),
 	}
 }
 
@@ -50,15 +56,62 @@ func (s *Server) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
+	return s.Serve(listener)
+}
+
+func (s *Server) Serve(listener net.Listener) error {
+	s.mu.Lock()
+	s.listener = listener
+	s.mu.Unlock()
 	defer listener.Close()
 
 	log.Printf("chat server listening on %s", listener.Addr())
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
+			select {
+			case <-s.shutdown:
+				return nil
+			default:
+			}
 			return err
 		}
-		go s.handleConnection(conn)
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			s.handleConnection(conn)
+		}()
+	}
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	s.closeOnce.Do(func() {
+		close(s.shutdown)
+		s.mu.RLock()
+		listener := s.listener
+		connections := make([]net.Conn, 0, len(s.clients))
+		for current := range s.clients {
+			connections = append(connections, current.conn)
+		}
+		s.mu.RUnlock()
+		if listener != nil {
+			_ = listener.Close()
+		}
+		for _, conn := range connections {
+			_ = conn.Close()
+		}
+	})
+
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
