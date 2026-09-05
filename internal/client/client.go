@@ -44,7 +44,7 @@ func Run(addr string) error {
 				}
 				return
 			}
-			display(message)
+			display(message, username)
 		}
 	}()
 
@@ -57,8 +57,16 @@ func Run(addr string) error {
 		if text == "" {
 			continue
 		}
+		if text == protocol.CommandHelp {
+			displayHelp()
+			continue
+		}
 		message, ok := parseInput(text)
 		if !ok {
+			if strings.HasPrefix(text, "/") {
+				fmt.Println("[error] unknown command; use /help")
+				continue
+			}
 			message = protocol.Message{Type: protocol.TypeChat, Content: text}
 		}
 		if err := encoder.Encode(message); err != nil {
@@ -90,18 +98,37 @@ func parseInput(text string) (protocol.Message, bool) {
 		return protocol.Message{Type: protocol.TypeCreateRoom, Content: strings.TrimSpace(strings.TrimPrefix(text, parts[0]))}, true
 	case protocol.CommandLeave:
 		return protocol.Message{Type: protocol.TypeLeaveRoom}, true
+	case protocol.CommandUsers:
+		return protocol.Message{Type: protocol.TypeListUsers}, true
+	case protocol.CommandMessage:
+		if len(parts) < 2 {
+			return protocol.Message{Type: protocol.TypePrivate}, true
+		}
+		remaining := strings.TrimSpace(strings.TrimPrefix(text, parts[0]))
+		remaining = strings.TrimSpace(strings.TrimPrefix(remaining, parts[1]))
+		return protocol.Message{Type: protocol.TypePrivate, Target: parts[1], Content: remaining}, true
 	default:
-		return protocol.Message{Type: protocol.TypeChat, Content: text}, false
+		return protocol.Message{}, false
 	}
 }
 
-func display(message protocol.Message) {
+func display(message protocol.Message, username string) {
 	switch message.Type {
 	case protocol.TypeChat:
 		fmt.Printf("[%s@%s] %s\n> ", message.Username, message.Room, message.Content)
+	case protocol.TypePrivate:
+		if message.Target == username {
+			fmt.Printf("[private from %s] %s\n> ", message.Username, message.Content)
+		} else {
+			fmt.Printf("[private -> %s] %s\n> ", message.Target, message.Content)
+		}
 	case protocol.TypeError:
 		fmt.Printf("[error] %s\n> ", message.Content)
 	default:
 		fmt.Printf("[system] %s\n> ", message.Content)
 	}
+}
+
+func displayHelp() {
+	fmt.Println("Commands: /help, /users, /rooms, /join <room>, /leave, /create <room>, /msg <user> <message>, /quit")
 }

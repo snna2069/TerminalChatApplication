@@ -69,3 +69,31 @@ func TestBroadcastToRoomOnlyReachesMembers(t *testing.T) {
 	default:
 	}
 }
+
+func TestPrivateMessage(t *testing.T) {
+	s := New("localhost:0")
+	alice := &client{out: make(chan protocol.Message, 4)}
+	bob := &client{out: make(chan protocol.Message, 4)}
+	if err := s.registerClient(alice, "alice"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.registerClient(bob, "bob"); err != nil {
+		t.Fatal(err)
+	}
+
+	s.privateMessage(alice, "bob", "hello privately")
+	received := <-bob.out
+	if received.Type != protocol.TypePrivate || received.Content != "hello privately" {
+		t.Fatalf("bob received %#v", received)
+	}
+	confirmed := <-alice.out
+	if confirmed.Target != "bob" || confirmed.Content != "hello privately" {
+		t.Fatalf("alice received confirmation %#v", confirmed)
+	}
+
+	s.privateMessage(alice, "nobody", "hello")
+	errorMessage := <-alice.out
+	if errorMessage.Type != protocol.TypeError {
+		t.Fatalf("missing-user response = %#v", errorMessage)
+	}
+}

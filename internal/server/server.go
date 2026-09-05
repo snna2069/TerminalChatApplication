@@ -119,6 +119,10 @@ func (s *Server) handleConnection(conn net.Conn) {
 			s.leaveRoom(c)
 		case protocol.TypeListRooms:
 			s.listRooms(c)
+		case protocol.TypeListUsers:
+			s.listUsers(c)
+		case protocol.TypePrivate:
+			s.privateMessage(c, message.Target, message.Content)
 		default:
 			c.send(protocol.Message{Type: protocol.TypeError, Content: "unsupported message type"})
 		}
@@ -249,6 +253,47 @@ func (s *Server) listRooms(c *client) {
 	s.mu.RUnlock()
 	sort.Strings(names)
 	c.send(protocol.Message{Type: protocol.TypeSystem, Content: "rooms: " + strings.Join(names, ", ")})
+}
+
+func (s *Server) listUsers(c *client) {
+	s.mu.RLock()
+	users := make([]string, 0, len(s.clients))
+	for current := range s.clients {
+		users = append(users, fmt.Sprintf("%s (%s)", current.username, current.room))
+	}
+	s.mu.RUnlock()
+	sort.Strings(users)
+	c.send(protocol.Message{Type: protocol.TypeSystem, Content: "online users:\n- " + strings.Join(users, "\n- ")})
+}
+
+func (s *Server) privateMessage(sender *client, targetName, content string) {
+	targetName = strings.TrimSpace(targetName)
+	content = strings.TrimSpace(content)
+	if targetName == "" {
+		sender.send(protocol.Message{Type: protocol.TypeError, Content: "usage: /msg username message"})
+		return
+	}
+	if content == "" {
+		sender.send(protocol.Message{Type: protocol.TypeError, Content: "private message cannot be empty"})
+		return
+	}
+
+	s.mu.RLock()
+	var recipient *client
+	for current := range s.clients {
+		if strings.EqualFold(current.username, targetName) {
+			recipient = current
+			break
+		}
+	}
+	s.mu.RUnlock()
+	if recipient == nil {
+		sender.send(protocol.Message{Type: protocol.TypeError, Content: fmt.Sprintf("user %q is offline", targetName)})
+		return
+	}
+	private := protocol.Message{Type: protocol.TypePrivate, Username: sender.username, Target: recipient.username, Content: content}
+	recipient.send(private)
+	sender.send(private)
 }
 
 func validateRoomName(name string) error {

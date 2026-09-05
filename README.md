@@ -29,6 +29,9 @@ Room commands:
 /create lounge  Create and join a room
 /join lounge    Join an existing room
 /leave          Return to general
+/users          List online users and their rooms
+/msg bob Hi!    Send a private message
+/help           Show command usage
 /quit           Disconnect
 ```
 
@@ -46,8 +49,8 @@ Example:
 - `internal/client` reads terminal input while a separate goroutine receives server messages.
 - `cmd/server` and `cmd/client` provide the command-line entry points.
 
-Messages are newline-delimited JSON. A client registers with `{"type":"register","username":"alice"}`, joins with `{"type":"join_room","content":"lounge"}`, and sends chat with `{"type":"chat","content":"Hello"}`. The server broadcasts chat only to members of the sender's current room.
+Messages are newline-delimited JSON. A client registers with `{"type":"register","username":"alice"}`, joins with `{"type":"join_room","content":"lounge"}`, sends chat with `{"type":"chat","content":"Hello"}`, and sends private messages with `{"type":"private_message","target":"bob","content":"Hi"}`. The server broadcasts chat only to members of the sender's current room and sends private messages only to the sender and recipient.
 
 ## Current scope
 
-Phase 2 covers registration, room creation, joining, leaving, listing, and room-scoped messaging. Private messages, online-user listing, persistence, tests, Makefile targets, and graceful server shutdown will be added in later phases.
+Phase 3 covers private messages, online-user listing, complete command parsing, and clear command errors. Message persistence, Makefile targets, and graceful server shutdown will be added in later phases.
