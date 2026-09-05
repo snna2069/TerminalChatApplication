@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Terminal Chat users joining</title>
+  <desc id="desc">A terminal server showing Sneha and Ammu connecting and joining the general chat room.</desc>
+  <rect width="960" height="540" rx="18" fill="#111827"/>
+  <rect x="1" y="1" width="958" height="538" rx="17" fill="none" stroke="#334155" stroke-width="2"/>
+  <rect width="960" height="58" rx="18" fill="#1e293b"/>
+  <path d="M0 40h960v18H0z" fill="#1e293b"/>
+  <circle cx="28" cy="29" r="7" fill="#fb7185"/>
+  <circle cx="52" cy="29" r="7" fill="#fbbf24"/>
+  <circle cx="76" cy="29" r="7" fill="#34d399"/>
+  <text x="112" y="35" fill="#94a3b8" font-family="Consolas, monospace" font-size="17">server — Terminal Chat</text>
+  <text x="38" y="105" fill="#67e8f9" font-family="Consolas, monospace" font-size="20">$</text>
+  <text x="64" y="105" fill="#f8fafc" font-family="Consolas, monospace" font-size="20">go run ./cmd/server -addr localhost:8080</text>
+  <text x="38" y="153" fill="#94a3b8" font-family="Consolas, monospace" font-size="18">chat server listening on localhost:8080</text>
+  <text x="38" y="215" fill="#34d399" font-family="Consolas, monospace" font-size="18">connected</text>
+  <text x="170" y="215" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">Sneha joined general</text>
+  <text x="38" y="263" fill="#67e8f9" font-family="Consolas, monospace" font-size="18">[Sneha@general]</text>
+  <text x="230" y="263" fill="#f8fafc" font-family="Consolas, monospace" font-size="18">Hi, Ammu! available?</text>
+  <text x="38" y="325" fill="#34d399" font-family="Consolas, monospace" font-size="18">connected</text>
+  <text x="170" y="325" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">Ammu joined general</text>
+  <text x="38" y="373" fill="#a7f3d0" font-family="Consolas, monospace" font-size="18">users</text>
+  <text x="125" y="373" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">Sneha, Ammu in general</text>
+  <text x="38" y="421" fill="#93c5fd" font-family="Consolas, monospace" font-size="18">ready</text>
+  <text x="125" y="421" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">two clients, one conversation</text>
+  <text x="38" y="489" fill="#64748b" font-family="Consolas, monospace" font-size="17">the chat starts when the users arrive</text>
+</svg>

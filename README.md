@@ -16,6 +16,10 @@ This is a fun starter project for me to understand Go by building something I wo
 The room story: Sneha creates `lounge`, Ammu finds it with `/rooms`, and joins with `/join lounge`.
 
 <p align="center">
+	<img src="assets/users-terminal.svg" alt="Sneha and Ammu joining the general chat room" width="760">
+</p>
+
+<p align="center">
 	<img src="assets/server-terminal.svg" alt="Sneha creating a lounge and Ammu joining it in Terminal Chat" width="760">
 </p>
 
@@ -52,11 +56,11 @@ go run ./cmd/client -addr localhost:8080
 Choose a different username in each terminal, then try a tiny conversation:
 
 ```text
-[alice@general] Hello Bob!
-[bob@general] Hi Alice!
-[alice@general] /create lounge
-[alice@lounge] This room is ours now.
-[bob@general] /msg alice Meet me in lounge!
+[Sneha@general] Hello Ammu!
+[Ammu@general] Hi Sneha!
+[Sneha@general] /create lounge
+[Sneha@lounge] This room is ours now.
+[Ammu@general] /msg Sneha Meet me in lounge!
 ```
 
 Each client asks for a unique username and starts in `general`. Type normal text and press Enter to broadcast it to members of the current room. Enter `/quit` to disconnect. Press `Ctrl+C` in the server terminal for graceful shutdown.
@@ -69,7 +73,7 @@ Room commands:
 /join lounge    Join an existing room
 /leave          Return to general
 /users          List online users and their rooms
-/msg bob Hi!    Send a private message
+/msg Ammu Hi!   Send a private message
 /history        Show recent history for the current room
 /history 50     Show up to 50 recent messages
 /help           Show command usage
@@ -79,8 +83,8 @@ Room commands:
 Example:
 
 ```text
-[alice@general] Hello Bob!
-[bob@general] Hi Alice!
+[Sneha@general] Hello Ammu!
+[Ammu@general] Hi Sneha!
 ```
 
 ## Architecture
@@ -90,7 +94,7 @@ Example:
 - `internal/client` reads terminal input while a separate goroutine receives server messages.
 - `cmd/server` and `cmd/client` provide the command-line entry points.
 
-Messages are newline-delimited JSON. A client registers with `{"type":"register","username":"alice"}`, joins with `{"type":"join_room","content":"lounge"}`, sends chat with `{"type":"chat","content":"Hello"}`, requests history with `{"type":"history","limit":20}`, and sends private messages with `{"type":"private_message","target":"bob","content":"Hi"}`. The server broadcasts chat only to members of the sender's current room and sends private messages only to the sender and recipient.
+Messages are newline-delimited JSON. A client registers with `{"type":"register","username":"Sneha"}`, joins with `{"type":"join_room","content":"lounge"}`, sends chat with `{"type":"chat","content":"Hello"}`, requests history with `{"type":"history","limit":20}`, and sends private messages with `{"type":"private_message","target":"Ammu","content":"Hi"}`. The server broadcasts chat only to members of the sender's current room and sends private messages only to the sender and recipient.
 
 ## Message persistence
 
@@ -117,10 +121,10 @@ Each connected client has a buffered outgoing channel and dedicated writer gorou
 Messages are one JSON object per line. Examples:
 
 ```json
-{"type":"register","username":"alice"}
+{"type":"register","username":"Sneha"}
 {"type":"join_room","content":"lounge"}
 {"type":"chat","content":"Hello"}
-{"type":"private_message","target":"bob","content":"Hi"}
+{"type":"private_message","target":"Ammu","content":"Hi"}
 {"type":"history","limit":20}
 ```
 
