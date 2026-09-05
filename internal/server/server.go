@@ -10,8 +10,11 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/snna2069/TerminalChatApplication/internal/protocol"
+	"github.com/snna2069/TerminalChatApplication/internal/store"
+	"github.com/snna2069/TerminalChatApplication/pkg/models"
 )
 
 type Server struct {
@@ -19,6 +22,7 @@ type Server struct {
 	mu      sync.RWMutex
 	clients map[*client]struct{}
 	rooms   map[string]*room
+	store   store.MessageStore
 }
 
 type client struct {
@@ -29,10 +33,15 @@ type client struct {
 }
 
 func New(addr string) *Server {
+	return NewWithStore(addr, store.NewMemoryStore())
+}
+
+func NewWithStore(addr string, messageStore store.MessageStore) *Server {
 	return &Server{
 		addr:    addr,
 		clients: make(map[*client]struct{}),
 		rooms:   map[string]*room{protocol.DefaultRoom: newRoom(protocol.DefaultRoom)},
+		store:   messageStore,
 	}
 }
 
@@ -110,6 +119,16 @@ func (s *Server) handleConnection(conn net.Conn) {
 				c.send(protocol.Message{Type: protocol.TypeError, Content: "message cannot be empty"})
 				continue
 			}
+			if err := s.store.SaveMessage(models.Message{
+				Timestamp: time.Now().UTC(),
+				Username:  c.username,
+				Room:      c.room,
+				Content:   content,
+			}); err != nil {
+				log.Printf("persist message from %s: %v", c.username, err)
+				c.send(protocol.Message{Type: protocol.TypeError, Content: "message could not be saved"})
+				continue
+			}
 			s.broadcastToRoom(c.room, protocol.Message{Type: protocol.TypeChat, Username: c.username, Room: c.room, Content: content})
 		case protocol.TypeCreateRoom:
 			s.createRoom(c, message.Content)
@@ -123,6 +142,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 			s.listUsers(c)
 		case protocol.TypePrivate:
 			s.privateMessage(c, message.Target, message.Content)
+		case protocol.TypeHistory:
+			s.history(c, message.Limit)
 		default:
 			c.send(protocol.Message{Type: protocol.TypeError, Content: "unsupported message type"})
 		}
@@ -294,6 +315,28 @@ func (s *Server) privateMessage(sender *client, targetName, content string) {
 	private := protocol.Message{Type: protocol.TypePrivate, Username: sender.username, Target: recipient.username, Content: content}
 	recipient.send(private)
 	sender.send(private)
+}
+
+func (s *Server) history(c *client, limit int) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	messages, err := s.store.GetRoomHistory(c.room, limit)
+	if err != nil {
+		log.Printf("load history for %s: %v", c.room, err)
+		c.send(protocol.Message{Type: protocol.TypeError, Content: "history could not be loaded"})
+		return
+	}
+	if len(messages) == 0 {
+		c.send(protocol.Message{Type: protocol.TypeSystem, Room: c.room, Content: "no history for room " + c.room})
+		return
+	}
+	lines := make([]string, 0, len(messages)+1)
+	lines = append(lines, "history for room "+c.room+":")
+	for _, message := range messages {
+		lines = append(lines, fmt.Sprintf("[%s] %s: %s", message.Timestamp.Local().Format("2006-01-02 15:04:05"), message.Username, message.Content))
+	}
+	c.send(protocol.Message{Type: protocol.TypeSystem, Room: c.room, Content: strings.Join(lines, "\n")})
 }
 
 func validateRoomName(name string) error {

@@ -11,6 +11,7 @@ const (
 	TypeListRooms  = "list_rooms"
 	TypeListUsers  = "list_users"
 	TypePrivate    = "private_message"
+	TypeHistory    = "history"
 	TypeSystem     = "system"
 	TypeError      = "error"
 )
@@ -21,6 +22,7 @@ type Message struct {
 	Target   string `json:"target,omitempty"`
 	Room     string `json:"room,omitempty"`
 	Content  string `json:"content,omitempty"`
+	Limit    int    `json:"limit,omitempty"`
 }
 
 func Encode(message Message) ([]byte, error) {

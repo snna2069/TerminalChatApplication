@@ -1,6 +1,6 @@
 # Terminal Chat Application
 
-A small multiplayer terminal chat application built with Go and raw TCP. Phase 2 adds multiple chat rooms and room-scoped broadcast messaging.
+A small multiplayer terminal chat application built with Go and raw TCP. Phase 4 adds JSON Lines message persistence and room history.
 
 ## Prerequisites
 
@@ -12,6 +12,8 @@ Start the server in one terminal:
 
 ```powershell
 go run ./cmd/server -addr localhost:8080
+# Optional custom history file:
+go run ./cmd/server -addr localhost:8080 -data data/messages.jsonl
 ```
 
 Start two or more clients in separate terminals:
@@ -31,6 +33,8 @@ Room commands:
 /leave          Return to general
 /users          List online users and their rooms
 /msg bob Hi!    Send a private message
+/history        Show recent history for the current room
+/history 50     Show up to 50 recent messages
 /help           Show command usage
 /quit           Disconnect
 ```
@@ -49,8 +53,12 @@ Example:
 - `internal/client` reads terminal input while a separate goroutine receives server messages.
 - `cmd/server` and `cmd/client` provide the command-line entry points.
 
-Messages are newline-delimited JSON. A client registers with `{"type":"register","username":"alice"}`, joins with `{"type":"join_room","content":"lounge"}`, sends chat with `{"type":"chat","content":"Hello"}`, and sends private messages with `{"type":"private_message","target":"bob","content":"Hi"}`. The server broadcasts chat only to members of the sender's current room and sends private messages only to the sender and recipient.
+Messages are newline-delimited JSON. A client registers with `{"type":"register","username":"alice"}`, joins with `{"type":"join_room","content":"lounge"}`, sends chat with `{"type":"chat","content":"Hello"}`, requests history with `{"type":"history","limit":20}`, and sends private messages with `{"type":"private_message","target":"bob","content":"Hi"}`. The server broadcasts chat only to members of the sender's current room and sends private messages only to the sender and recipient.
+
+## Message persistence
+
+The server stores room chat messages as one JSON object per line in `data/messages.jsonl` by default. Each record contains a UTC timestamp, username, room, and message content. The storage interface is isolated in `internal/store`, so the JSON Lines backend can be replaced later.
 
 ## Current scope
 
-Phase 3 covers private messages, online-user listing, complete command parsing, and clear command errors. Message persistence, Makefile targets, and graceful server shutdown will be added in later phases.
+Phase 4 covers private messages, online-user listing, complete command parsing, JSON Lines message persistence, and room history. Makefile targets, integration tests, and graceful server shutdown will be added in later phases.

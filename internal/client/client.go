@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/snna2069/TerminalChatApplication/internal/protocol"
@@ -107,6 +108,12 @@ func parseInput(text string) (protocol.Message, bool) {
 		remaining := strings.TrimSpace(strings.TrimPrefix(text, parts[0]))
 		remaining = strings.TrimSpace(strings.TrimPrefix(remaining, parts[1]))
 		return protocol.Message{Type: protocol.TypePrivate, Target: parts[1], Content: remaining}, true
+	case protocol.CommandHistory:
+		limit := 0
+		if len(parts) > 1 {
+			limit, _ = strconv.Atoi(parts[1])
+		}
+		return protocol.Message{Type: protocol.TypeHistory, Limit: limit}, true
 	default:
 		return protocol.Message{}, false
 	}
