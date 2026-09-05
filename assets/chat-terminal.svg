@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Terminal Chat message story</title>
+  <desc id="desc">Two terminal chat windows showing Sneha sending a message to Ammu and receiving a reply.</desc>
+  <rect width="960" height="540" rx="18" fill="#f8fafc"/>
+  <rect x="1" y="1" width="958" height="538" rx="17" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="28" y="32" width="430" height="444" rx="12" fill="#0f172a"/>
+  <rect x="502" y="32" width="430" height="444" rx="12" fill="#172554"/>
+  <circle cx="52" cy="58" r="6" fill="#fb7185"/>
+  <circle cx="72" cy="58" r="6" fill="#fbbf24"/>
+  <circle cx="92" cy="58" r="6" fill="#34d399"/>
+  <circle cx="526" cy="58" r="6" fill="#fb7185"/>
+  <circle cx="546" cy="58" r="6" fill="#fbbf24"/>
+  <circle cx="566" cy="58" r="6" fill="#34d399"/>
+  <text x="122" y="64" fill="#94a3b8" font-family="Consolas, monospace" font-size="16">Sneha@terminal</text>
+  <text x="596" y="64" fill="#93c5fd" font-family="Consolas, monospace" font-size="16">Ammu@terminal</text>
+  <text x="50" y="116" fill="#67e8f9" font-family="Consolas, monospace" font-size="17">[Sneha@general]</text>
+  <text x="50" y="154" fill="#f8fafc" font-family="Consolas, monospace" font-size="17">/msg Ammu Hi, Ammu! available?</text>
+  <text x="50" y="224" fill="#64748b" font-family="Consolas, monospace" font-size="17">message delivered</text>
+  <text x="50" y="294" fill="#a7f3d0" font-family="Consolas, monospace" font-size="17">[Ammu@general]</text>
+  <text x="50" y="332" fill="#f8fafc" font-family="Consolas, monospace" font-size="17">Hey Sneha! I am here.</text>
+  <text x="50" y="402" fill="#67e8f9" font-family="Consolas, monospace" font-size="17">[Sneha@general]</text>
+  <text x="50" y="440" fill="#f8fafc" font-family="Consolas, monospace" font-size="17">Great, let us build!</text>
+  <text x="524" y="116" fill="#67e8f9" font-family="Consolas, monospace" font-size="17">[Sneha@general]</text>
+  <text x="524" y="154" fill="#f8fafc" font-family="Consolas, monospace" font-size="17">Hi, Ammu! available?</text>
+  <text x="524" y="224" fill="#a7f3d0" font-family="Consolas, monospace" font-size="17">[Ammu@general]</text>
+  <text x="524" y="262" fill="#f8fafc" font-family="Consolas, monospace" font-size="17">Hey Sneha! I am here.</text>
+  <text x="524" y="332" fill="#64748b" font-family="Consolas, monospace" font-size="17">message delivered</text>
+  <text x="524" y="402" fill="#67e8f9" font-family="Consolas, monospace" font-size="17">[Sneha@general]</text>
+  <text x="524" y="440" fill="#f8fafc" font-family="Consolas, monospace" font-size="17">Great, let us build!</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Terminal Chat lounge story</title>
+  <desc id="desc">A dark terminal window showing Sneha creating a lounge and Ammu joining it.</desc>
+  <rect width="960" height="540" rx="18" fill="#111827"/>
+  <rect x="1" y="1" width="958" height="538" rx="17" fill="none" stroke="#334155" stroke-width="2"/>
+  <rect width="960" height="58" rx="18" fill="#1e293b"/>
+  <path d="M0 40h960v18H0z" fill="#1e293b"/>
+  <circle cx="28" cy="29" r="7" fill="#fb7185"/>
+  <circle cx="52" cy="29" r="7" fill="#fbbf24"/>
+  <circle cx="76" cy="29" r="7" fill="#34d399"/>
+  <text x="112" y="35" fill="#94a3b8" font-family="Consolas, monospace" font-size="17">rooms — Terminal Chat</text>
+  <text x="38" y="105" fill="#67e8f9" font-family="Consolas, monospace" font-size="20">$</text>
+  <text x="64" y="105" fill="#f8fafc" font-family="Consolas, monospace" font-size="20">/create lounge</text>
+  <text x="38" y="153" fill="#fbbf24" font-family="Consolas, monospace" font-size="18">room</text>
+  <text x="110" y="153" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">lounge created by Sneha</text>
+  <text x="38" y="201" fill="#67e8f9" font-family="Consolas, monospace" font-size="18">[Sneha@lounge]</text>
+  <text x="220" y="201" fill="#f8fafc" font-family="Consolas, monospace" font-size="18">Welcome to our room!</text>
+  <text x="38" y="249" fill="#67e8f9" font-family="Consolas, monospace" font-size="20">$</text>
+  <text x="64" y="249" fill="#f8fafc" font-family="Consolas, monospace" font-size="20">/join lounge</text>
+  <text x="38" y="297" fill="#34d399" font-family="Consolas, monospace" font-size="18">joined</text>
+  <text x="140" y="297" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">Ammu entered lounge</text>
+  <text x="38" y="345" fill="#a7f3d0" font-family="Consolas, monospace" font-size="18">users</text>
+  <text x="125" y="345" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">Sneha, Ammu</text>
+  <text x="38" y="393" fill="#fbbf24" font-family="Consolas, monospace" font-size="18">lounge</text>
+  <text x="140" y="393" fill="#cbd5e1" font-family="Consolas, monospace" font-size="18">two friends, one room</text>
+  <text x="38" y="489" fill="#64748b" font-family="Consolas, monospace" font-size="17">/rooms to see it · /leave to return to general</text>
+</svg>

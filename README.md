@@ -1,6 +1,29 @@
 # Terminal Chat Application
 
-A multiplayer terminal chat application written in Go using raw TCP and newline-delimited JSON. It demonstrates concurrent client handling, synchronized shared state, multiple rooms, private messages, online users, and persistent room history.
+<p align="center">
+	<strong>Terminal Chat</strong><br>
+	<em>A tiny room for learning Go, one message at a time.</em>
+</p>
+
+<p align="center">
+	<img src="assets/chat-terminal.svg" alt="Two Terminal Chat clients exchanging messages" width="760">
+</p>
+
+This is a fun starter project for me to understand Go by building something I would actually use: a multiplayer terminal chat application. It uses raw TCP and newline-delimited JSON to explore goroutines, channels, synchronized shared state, rooms, private messages, and persistent history.
+
+## Showcase
+
+The room story: Sneha creates `lounge`, Ammu finds it with `/rooms`, and joins with `/join lounge`.
+
+<p align="center">
+	<img src="assets/server-terminal.svg" alt="Sneha creating a lounge and Ammu joining it in Terminal Chat" width="760">
+</p>
+
+<p align="center">
+	<img src="assets/rooms-terminal.svg" alt="Sneha and Ammu finding and joining the lounge room" width="760">
+</p>
+
+> **The idea:** open one terminal for the server, two or more for friends, and let the command line become the chat room.
 
 ## Prerequisites
 
@@ -8,7 +31,9 @@ A multiplayer terminal chat application written in Go using raw TCP and newline-
 
 ## Run
 
-Start the server in one terminal:
+### 1. Start the server
+
+Open a terminal and run:
 
 ```powershell
 go run ./cmd/server -addr localhost:8080
@@ -16,10 +41,22 @@ go run ./cmd/server -addr localhost:8080
 go run ./cmd/server -addr localhost:8080 -data data/messages.jsonl
 ```
 
-Start two or more clients in separate terminals:
+### 2. Join with two clients
+
+Open two more terminals and run this in each one:
 
 ```powershell
 go run ./cmd/client -addr localhost:8080
+```
+
+Choose a different username in each terminal, then try a tiny conversation:
+
+```text
+[alice@general] Hello Bob!
+[bob@general] Hi Alice!
+[alice@general] /create lounge
+[alice@lounge] This room is ours now.
+[bob@general] /msg alice Meet me in lounge!
 ```
 
 Each client asks for a unique username and starts in `general`. Type normal text and press Enter to broadcast it to members of the current room. Enter `/quit` to disconnect. Press `Ctrl+C` in the server terminal for graceful shutdown.
