@@ -3,10 +3,14 @@ package protocol
 import "encoding/json"
 
 const (
-	TypeRegister = "register"
-	TypeChat     = "chat"
-	TypeSystem   = "system"
-	TypeError    = "error"
+	TypeRegister   = "register"
+	TypeChat       = "chat"
+	TypeCreateRoom = "create_room"
+	TypeJoinRoom   = "join_room"
+	TypeLeaveRoom  = "leave_room"
+	TypeListRooms  = "list_rooms"
+	TypeSystem     = "system"
+	TypeError      = "error"
 )
 
 type Message struct {

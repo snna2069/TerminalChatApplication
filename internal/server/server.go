@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"sort"
 	"strings"
 	"sync"
 
@@ -17,16 +18,22 @@ type Server struct {
 	addr    string
 	mu      sync.RWMutex
 	clients map[*client]struct{}
+	rooms   map[string]*room
 }
 
 type client struct {
 	conn     net.Conn
 	username string
+	room     string
 	out      chan protocol.Message
 }
 
 func New(addr string) *Server {
-	return &Server{addr: addr, clients: make(map[*client]struct{})}
+	return &Server{
+		addr:    addr,
+		clients: make(map[*client]struct{}),
+		rooms:   map[string]*room{protocol.DefaultRoom: newRoom(protocol.DefaultRoom)},
+	}
 }
 
 func (s *Server) ListenAndServe() error {
@@ -91,21 +98,30 @@ func (s *Server) handleConnection(conn net.Conn) {
 				continue
 			}
 			registered = true
-			c.send(protocol.Message{Type: protocol.TypeSystem, Room: protocol.DefaultRoom, Content: fmt.Sprintf("connected as %s; joined room %s", c.username, protocol.DefaultRoom)})
+			c.send(protocol.Message{Type: protocol.TypeSystem, Room: c.room, Content: fmt.Sprintf("connected as %s; joined room %s", c.username, c.room)})
 			s.broadcast(protocol.Message{Type: protocol.TypeSystem, Content: fmt.Sprintf("%s joined the chat", c.username)}, c)
 			continue
 		}
 
-		if message.Type == protocol.TypeChat {
+		switch message.Type {
+		case protocol.TypeChat:
 			content := strings.TrimSpace(message.Content)
 			if content == "" {
 				c.send(protocol.Message{Type: protocol.TypeError, Content: "message cannot be empty"})
 				continue
 			}
-			s.broadcast(protocol.Message{Type: protocol.TypeChat, Username: c.username, Room: protocol.DefaultRoom, Content: content}, nil)
-			continue
+			s.broadcastToRoom(c.room, protocol.Message{Type: protocol.TypeChat, Username: c.username, Room: c.room, Content: content})
+		case protocol.TypeCreateRoom:
+			s.createRoom(c, message.Content)
+		case protocol.TypeJoinRoom:
+			s.joinRoom(c, message.Content)
+		case protocol.TypeLeaveRoom:
+			s.leaveRoom(c)
+		case protocol.TypeListRooms:
+			s.listRooms(c)
+		default:
+			c.send(protocol.Message{Type: protocol.TypeError, Content: "unsupported message type"})
 		}
-		c.send(protocol.Message{Type: protocol.TypeError, Content: "unsupported message type"})
 	}
 }
 
@@ -126,13 +142,18 @@ func (s *Server) registerClient(c *client, username string) error {
 		}
 	}
 	c.username = username
+	c.room = protocol.DefaultRoom
 	s.clients[c] = struct{}{}
+	s.rooms[c.room].clients[c] = struct{}{}
 	return nil
 }
 
 func (s *Server) removeClient(c *client) {
 	s.mu.Lock()
 	delete(s.clients, c)
+	if current, ok := s.rooms[c.room]; ok {
+		delete(current.clients, c)
+	}
 	s.mu.Unlock()
 }
 
@@ -144,6 +165,100 @@ func (s *Server) broadcast(message protocol.Message, excluded *client) {
 			c.send(message)
 		}
 	}
+}
+
+func (s *Server) broadcastToRoom(roomName string, message protocol.Message) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	current, ok := s.rooms[roomName]
+	if !ok {
+		return
+	}
+	for c := range current.clients {
+		c.send(message)
+	}
+}
+
+func (s *Server) createRoom(c *client, name string) {
+	name = strings.TrimSpace(name)
+	if err := validateRoomName(name); err != nil {
+		c.send(protocol.Message{Type: protocol.TypeError, Content: err.Error()})
+		return
+	}
+
+	s.mu.Lock()
+	if _, exists := s.rooms[name]; exists {
+		s.mu.Unlock()
+		c.send(protocol.Message{Type: protocol.TypeError, Content: fmt.Sprintf("room %q already exists", name)})
+		return
+	}
+	s.rooms[name] = newRoom(name)
+	s.mu.Unlock()
+	c.send(protocol.Message{Type: protocol.TypeSystem, Content: fmt.Sprintf("created room %s", name)})
+	s.joinRoom(c, name)
+}
+
+func (s *Server) joinRoom(c *client, name string) {
+	name = strings.TrimSpace(name)
+	if err := validateRoomName(name); err != nil {
+		c.send(protocol.Message{Type: protocol.TypeError, Content: err.Error()})
+		return
+	}
+
+	s.mu.Lock()
+	target, exists := s.rooms[name]
+	if !exists {
+		s.mu.Unlock()
+		c.send(protocol.Message{Type: protocol.TypeError, Content: fmt.Sprintf("room %q does not exist", name)})
+		return
+	}
+	if c.room == name {
+		s.mu.Unlock()
+		c.send(protocol.Message{Type: protocol.TypeSystem, Room: name, Content: fmt.Sprintf("already in room %s", name)})
+		return
+	}
+	previous := c.room
+	if current, ok := s.rooms[previous]; ok {
+		delete(current.clients, c)
+	}
+	target.clients[c] = struct{}{}
+	c.room = name
+	s.mu.Unlock()
+
+	c.send(protocol.Message{Type: protocol.TypeSystem, Room: name, Content: fmt.Sprintf("joined room %s", name)})
+	s.broadcastToRoom(name, protocol.Message{Type: protocol.TypeSystem, Room: name, Content: fmt.Sprintf("%s joined the room", c.username)})
+}
+
+func (s *Server) leaveRoom(c *client) {
+	s.mu.RLock()
+	current := c.room
+	s.mu.RUnlock()
+	if current == protocol.DefaultRoom {
+		c.send(protocol.Message{Type: protocol.TypeError, Room: current, Content: "you are already in the general room"})
+		return
+	}
+	s.joinRoom(c, protocol.DefaultRoom)
+}
+
+func (s *Server) listRooms(c *client) {
+	s.mu.RLock()
+	names := make([]string, 0, len(s.rooms))
+	for name := range s.rooms {
+		names = append(names, name)
+	}
+	s.mu.RUnlock()
+	sort.Strings(names)
+	c.send(protocol.Message{Type: protocol.TypeSystem, Content: "rooms: " + strings.Join(names, ", ")})
+}
+
+func validateRoomName(name string) error {
+	if name == "" {
+		return fmt.Errorf("room name cannot be empty")
+	}
+	if strings.ContainsAny(name, " \t\r\n") {
+		return fmt.Errorf("room name cannot contain whitespace")
+	}
+	return nil
 }
 
 func (c *client) send(message protocol.Message) {

@@ -51,13 +51,17 @@ func Run(addr string) error {
 	fmt.Println("Type a message and press Enter. Use /quit to exit.")
 	for input.Scan() {
 		text := strings.TrimSpace(input.Text())
-		if text == "/quit" {
+		if text == protocol.CommandQuit {
 			return nil
 		}
 		if text == "" {
 			continue
 		}
-		if err := encoder.Encode(protocol.Message{Type: protocol.TypeChat, Content: text}); err != nil {
+		message, ok := parseInput(text)
+		if !ok {
+			message = protocol.Message{Type: protocol.TypeChat, Content: text}
+		}
+		if err := encoder.Encode(message); err != nil {
 			return err
 		}
 		select {
@@ -70,6 +74,25 @@ func Run(addr string) error {
 		return err
 	}
 	return <-readDone
+}
+
+func parseInput(text string) (protocol.Message, bool) {
+	parts := strings.Fields(text)
+	if len(parts) == 0 || !strings.HasPrefix(parts[0], "/") {
+		return protocol.Message{}, false
+	}
+	switch parts[0] {
+	case protocol.CommandRooms:
+		return protocol.Message{Type: protocol.TypeListRooms}, true
+	case protocol.CommandJoin:
+		return protocol.Message{Type: protocol.TypeJoinRoom, Content: strings.TrimSpace(strings.TrimPrefix(text, parts[0]))}, true
+	case protocol.CommandCreate:
+		return protocol.Message{Type: protocol.TypeCreateRoom, Content: strings.TrimSpace(strings.TrimPrefix(text, parts[0]))}, true
+	case protocol.CommandLeave:
+		return protocol.Message{Type: protocol.TypeLeaveRoom}, true
+	default:
+		return protocol.Message{Type: protocol.TypeChat, Content: text}, false
+	}
 }
 
 func display(message protocol.Message) {
